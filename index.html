@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For you</title>
+<style>
+  :root {
+    --ink: #111;
+    --paper: #fff;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    padding: 4vmin;
+  }
+
+  /* ---------- stages ---------- */
+
+  .stage {
+    grid-area: 1 / 1;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 700ms ease;
+  }
+  .stage.active { opacity: 1; pointer-events: auto; }
+
+  /* ---------- envelopes ---------- */
+
+  .envelope {
+    width: min(70vw, 62vh * 1.4286, 640px);
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+    display: block;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .envelope img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transform-origin: 50% 60%;
+  }
+  .envelope:focus-visible { outline: 2px solid var(--ink); outline-offset: 12px; }
+
+  /* Idle nudge: ~1.5s of movement, then ~3.5s still. */
+  .nudging img { animation: nudge 5s ease-in-out infinite; }
+
+  @keyframes nudge {
+    0%   { transform: rotate(0deg) translate(0, 0); }
+    3%   { transform: rotate(-2.2deg) translate(-5px, -1px); }
+    6%   { transform: rotate(2deg)    translate(5px, 0); }
+    9%   { transform: rotate(-1.7deg) translate(-4px, -1px); }
+    13%  { transform: rotate(1.4deg)  translate(3px, 0); }
+    17%  { transform: rotate(-1deg)   translate(-2px, 0); }
+    21%  { transform: rotate(0.6deg)  translate(1px, 0); }
+    25%  { transform: rotate(-0.3deg) translate(0, 0); }
+    30%, 100% { transform: rotate(0deg) translate(0, 0); }
+  }
+
+  .hint {
+    margin-top: 3.5vh;
+    font: 500 10px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity 900ms ease;
+  }
+  .hint.show { opacity: 0.35; }
+
+  /* ---------- letter ---------- */
+
+  #letter-img {
+    height: min(90vh, 1000px);
+    width: auto;
+    max-width: 94vw;
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nudging img { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 1 - closed envelope -->
+  <div class="stage active" id="stage-closed">
+    <div>
+      <button class="envelope nudging" id="btn-closed" type="button" aria-label="Open the envelope">
+        <img src="closed-env.png" alt="A closed envelope">
+      </button>
+      <div class="hint" id="hint-closed">click</div>
+    </div>
+  </div>
+
+  <!-- 2 - open envelope -->
+  <div class="stage" id="stage-open">
+    <div>
+      <button class="envelope" id="btn-open" type="button" aria-label="Take out the letter">
+        <img src="open-env.png" alt="An open envelope">
+      </button>
+      <div class="hint" id="hint-open">click</div>
+    </div>
+  </div>
+
+  <!-- 3 - the letter -->
+  <div class="stage" id="stage-letter">
+    <img id="letter-img" src="letter.png" alt="A handwritten letter">
+  </div>
+
+<script>
+(function () {
+
+  const stages = {
+    closed: document.getElementById('stage-closed'),
+    open:   document.getElementById('stage-open'),
+    letter: document.getElementById('stage-letter')
+  };
+
+  const btnClosed  = document.getElementById('btn-closed');
+  const btnOpen    = document.getElementById('btn-open');
+  const hintClosed = document.getElementById('hint-closed');
+  const hintOpen   = document.getElementById('hint-open');
+
+  function show(name) {
+    for (const key in stages) stages[key].classList.toggle('active', key === name);
+  }
+
+  // Preload so each swap is instant, with no white flash mid-transition.
+  ['open-env.png', 'letter.png'].forEach(src => { new Image().src = src; });
+
+  btnClosed.addEventListener('click', () => {
+    btnClosed.classList.remove('nudging');
+    hintClosed.classList.remove('show');
+    show('open');
+    btnOpen.classList.add('nudging');
+    setTimeout(() => hintOpen.classList.add('show'), 2500);
+  });
+
+  btnOpen.addEventListener('click', () => {
+    btnOpen.classList.remove('nudging');
+    hintOpen.classList.remove('show');
+    show('letter');
+  });
+
+  // The hint only appears if she hasn't clicked after a few seconds.
+  setTimeout(() => {
+    if (stages.closed.classList.contains('active')) hintClosed.classList.add('show');
+  }, 4000);
+
+})();
+</script>
+</body>
+</html>
